@@ -24,7 +24,7 @@ function normalizeItem(item: any, provider: string) {
 }
 
 export default function ProviderSection({ title, provider, items, viewAllHref }: ProviderSectionProps) {
-  if (!items || items.length === 0) return null
+  if (!items || !Array.isArray(items) || items.length === 0) return null
 
   const displayItems = items.slice(0, 10)
 
