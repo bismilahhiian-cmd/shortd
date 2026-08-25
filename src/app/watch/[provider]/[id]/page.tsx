@@ -5,16 +5,35 @@ import Link from 'next/link'
 import { Play, Star, Eye, ListVideo, Coins } from 'lucide-react'
 import { formatViews } from '@/lib/utils'
 
-import { fetchWithCache } from '@/lib/api/sansekai'
+import { pinedrama, dramabox, melolo, reelshort, shortmax, freereels, dramanova, anime, komik, moviebox } from '@/lib/api/sansekai'
 
 export default async function DramaDetailPage({ params }: { params: { provider: string, id: string } }) {
   const { provider, id } = params
   
   let detail: any = {}
+  let episodesList: any = null
   
   try {
-    const res = await fetchWithCache(`/${provider}/detail`, { id: id })
+    let res: any = null
+    switch (provider) {
+      case 'pinedrama': res = await pinedrama.detail(id); break;
+      case 'dramabox': res = await dramabox.detail(id); episodesList = await dramabox.allepisode(id); break;
+      case 'melolo': res = await melolo.detail(id); break;
+      case 'reelshort': res = await reelshort.detail(id); break;
+      case 'shortmax': res = await shortmax.detail(id); break;
+      case 'freereels': res = await freereels.detailAndAllEpisode(id); break;
+      case 'dramanova': res = await dramanova.detail(id); break;
+      case 'anime': res = await anime.detail(id); break;
+      case 'komik': res = await komik.detail(id); break;
+      case 'moviebox': res = await moviebox.detail(id); break;
+      default: throw new Error("Unknown provider")
+    }
     detail = res?.data || res?.detail || res || {}
+    
+    // Some providers have episodes in a separate call
+    if (episodesList) {
+      detail.episode_list = episodesList?.data || episodesList?.list || episodesList
+    }
   } catch (e) {
     console.error("Failed to fetch detail", e)
   }

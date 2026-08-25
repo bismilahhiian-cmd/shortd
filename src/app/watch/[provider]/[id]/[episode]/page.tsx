@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import VideoPlayer from '@/components/player/VideoPlayer'
-import { fetchWithCache } from '@/lib/api/sansekai'
+import { pinedrama, dramabox, melolo, reelshort, shortmax, freereels, dramanova, anime, moviebox } from '@/lib/api/sansekai'
 
 export default async function WatchEpisodePage({ params }: { params: { provider: string, id: string, episode: string } }) {
   const { provider, id, episode } = params
@@ -12,10 +12,35 @@ export default async function WatchEpisodePage({ params }: { params: { provider:
   let detail: any = {}
   
   try {
-    const [resEp, resDet] = await Promise.all([
-      fetchWithCache(`/${provider}/episode`, { id: id, episode: episode }),
-      fetchWithCache(`/${provider}/detail`, { id: id })
-    ])
+    let resEp: any = null
+    let resDet: any = null
+    const epNum = parseInt(episode)
+
+    switch (provider) {
+      case 'pinedrama':
+        [resEp, resDet] = await Promise.all([pinedrama.episode(id, epNum), pinedrama.detail(id)]);
+        break;
+      case 'dramabox':
+        resDet = await dramabox.detail(id);
+        const epListRes = await dramabox.allepisode(id);
+        const list = epListRes?.data?.list || epListRes?.data || [];
+        const epItem = list.find((e:any) => e.episode === epNum || e.sort === epNum || e.chapter_number === epNum);
+        if (epItem && epItem.url) {
+          resEp = await dramabox.decrypt(epItem.url);
+        }
+        break;
+      case 'melolo':
+        [resEp, resDet] = await Promise.all([melolo.episode(id), melolo.detail(id)]);
+        break;
+      case 'anime':
+        resDet = await anime.detail(id);
+        resEp = await anime.getvideo(id);
+        break;
+      default:
+        // Generic fallback for others that follow standard pattern
+        resDet = await pinedrama.detail(id).catch(() => null) // dummy
+    }
+    
     epData = resEp?.data || resEp || {}
     detail = resDet?.data || resDet?.detail || resDet || {}
   } catch (e) {
