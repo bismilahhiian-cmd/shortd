@@ -1,10 +1,16 @@
 export const dynamic = 'force-dynamic'
 
-import { scrapeMangaLatest } from '@/lib/scrapers/manga'
+import { komik } from '@/lib/api/sansekai'
 import ProviderSection from '@/components/home/ProviderSection'
 
 export default async function KomikPage() {
-  const mangaList = await scrapeMangaLatest().catch(() => [])
+  let mangaList = []
+  try {
+    const res = await komik.latest('manga') // Assuming 'manga' or '' is the type
+    mangaList = res?.data || []
+  } catch (e) {
+    console.error(e)
+  }
 
   return (
     <div className="min-h-screen py-8">
