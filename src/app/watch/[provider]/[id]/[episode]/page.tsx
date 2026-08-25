@@ -5,6 +5,8 @@ import { ArrowLeft } from 'lucide-react'
 import VideoPlayer from '@/components/player/VideoPlayer'
 import { pinedrama, dramabox, melolo, reelshort, shortmax, freereels, dramanova, anime, moviebox } from '@/lib/api/sansekai'
 
+import { scrapeAnimeEpisode, scrapeAnimeDetail } from '@/lib/scrapers/anime'
+
 export default async function WatchEpisodePage({ params }: { params: { provider: string, id: string, episode: string } }) {
   const { provider, id, episode } = params
   
@@ -33,8 +35,8 @@ export default async function WatchEpisodePage({ params }: { params: { provider:
         [resEp, resDet] = await Promise.all([melolo.episode(id), melolo.detail(id)]);
         break;
       case 'anime':
-        resDet = await anime.detail(id);
-        resEp = await anime.getvideo(id);
+        resDet = await scrapeAnimeDetail(id);
+        resEp = await scrapeAnimeEpisode(episode); // Usually the ID is the full slug string for anime
         break;
       default:
         // Generic fallback for others that follow standard pattern
@@ -47,7 +49,14 @@ export default async function WatchEpisodePage({ params }: { params: { provider:
     console.error("Failed to fetch episode", e)
   }
 
-  const streamUrl = epData.url || epData.video_url || epData.stream_url || epData.m3u8 || ''
+  let streamUrl = epData.url || epData.video_url || epData.stream_url || epData.m3u8 || ''
+  
+  if (provider === 'anime' && epData.streams && epData.streams.length > 0) {
+    // Try to get a valid mp4 url from the streams list (Otakudesu scraper)
+    const stream = epData.streams[0]
+    streamUrl = stream.urls[0]?.url || streamUrl
+  }
+
   const title = detail.title || detail.name || detail.book_name || 'Drama'
   const cover = detail.cover || detail.cover_img || detail.thumbnail || detail.image || ''
   

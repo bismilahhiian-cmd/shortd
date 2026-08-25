@@ -14,10 +14,11 @@ interface VideoPlayerProps {
   dramaCover: string
   episodeNumber: number
   totalDuration?: number
+  subtitleUrl?: string
 }
 
 export default function VideoPlayer({
-  streamUrl, provider, dramaId, dramaTitle, dramaCover, episodeNumber, totalDuration = 0
+  streamUrl, provider, dramaId, dramaTitle, dramaCover, episodeNumber, totalDuration = 0, subtitleUrl
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
@@ -171,7 +172,17 @@ export default function VideoPlayer({
         onLoadedData={() => setLoading(false)}
         onClick={togglePlay}
         playsInline
-      />
+      >
+        {subtitleUrl && (
+          <track
+            kind="subtitles"
+            src={subtitleUrl}
+            srcLang="id"
+            label="Indonesia"
+            default
+          />
+        )}
+      </video>
 
       {/* Loading */}
       {loading && (
