@@ -1,0 +1,63 @@
+export const dynamic = 'force-dynamic'
+
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
+import VideoPlayer from '@/components/player/VideoPlayer'
+import { fetchWithCache } from '@/lib/api/sansekai'
+
+export default async function WatchEpisodePage({ params }: { params: { provider: string, id: string, episode: string } }) {
+  const { provider, id, episode } = params
+  
+  let epData: any = {}
+  let detail: any = {}
+  
+  try {
+    const [resEp, resDet] = await Promise.all([
+      fetchWithCache(`/${provider}/episode`, { id: id, episode: episode }),
+      fetchWithCache(`/${provider}/detail`, { id: id })
+    ])
+    epData = resEp?.data || resEp || {}
+    detail = resDet?.data || resDet?.detail || resDet || {}
+  } catch (e) {
+    console.error("Failed to fetch episode", e)
+  }
+
+  const streamUrl = epData.url || epData.video_url || epData.stream_url || epData.m3u8 || ''
+  const title = detail.title || detail.name || detail.book_name || 'Drama'
+  const cover = detail.cover || detail.cover_img || detail.thumbnail || detail.image || ''
+  
+  // Try to parse totalDuration if available (some APIs return it)
+  const duration = parseInt(epData.duration || '0')
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="mb-4">
+        <Link href={`/watch/${provider}/${id}`} className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium">
+          <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Episode
+        </Link>
+      </div>
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <p className="text-violet-400 font-medium">Episode {episode}</p>
+      </div>
+
+      {streamUrl ? (
+        <VideoPlayer 
+          streamUrl={streamUrl}
+          provider={provider}
+          dramaId={id}
+          dramaTitle={title}
+          dramaCover={cover}
+          episodeNumber={parseInt(episode)}
+          totalDuration={duration}
+        />
+      ) : (
+        <div className="aspect-video bg-gray-900 rounded-2xl flex flex-col items-center justify-center border border-gray-800">
+          <p className="text-red-400 mb-2">Video tidak tersedia</p>
+          <p className="text-sm text-gray-500">Mungkin link episode rusak atau ini episode VIP berbayar.</p>
+        </div>
+      )}
+    </div>
+  )
+}
