@@ -7,9 +7,6 @@ import { formatViews } from '@/lib/utils'
 
 import { pinedrama, dramabox, melolo, reelshort, shortmax, freereels, dramanova, anime, komik, moviebox } from '@/lib/api/sansekai'
 
-import { scrapeAnimeDetail } from '@/lib/scrapers/anime'
-import { scrapeMangaDetail } from '@/lib/scrapers/manga'
-
 export default async function DramaDetailPage({ params }: { params: { provider: string, id: string } }) {
   const { provider, id } = params
   
@@ -26,8 +23,8 @@ export default async function DramaDetailPage({ params }: { params: { provider: 
       case 'shortmax': res = await shortmax.detail(id); break;
       case 'freereels': res = await freereels.detailAndAllEpisode(id); break;
       case 'dramanova': res = await dramanova.detail(id); break;
-      case 'anime': res = await scrapeAnimeDetail(id); break;
-      case 'komik': res = await scrapeMangaDetail(id); break;
+      case 'anime': res = await anime.detail(id); break;
+      case 'komik': res = await komik.detail(id); break;
       case 'moviebox': res = await moviebox.detail(id); break;
       default: throw new Error("Unknown provider")
     }

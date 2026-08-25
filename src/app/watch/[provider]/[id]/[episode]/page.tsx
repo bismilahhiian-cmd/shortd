@@ -5,8 +5,6 @@ import { ArrowLeft } from 'lucide-react'
 import VideoPlayer from '@/components/player/VideoPlayer'
 import { pinedrama, dramabox, melolo, reelshort, shortmax, freereels, dramanova, anime, moviebox } from '@/lib/api/sansekai'
 
-import { scrapeAnimeEpisode, scrapeAnimeDetail } from '@/lib/scrapers/anime'
-
 export default async function WatchEpisodePage({ params }: { params: { provider: string, id: string, episode: string } }) {
   const { provider, id, episode } = params
   
@@ -35,8 +33,8 @@ export default async function WatchEpisodePage({ params }: { params: { provider:
         [resEp, resDet] = await Promise.all([melolo.episode(id), melolo.detail(id)]);
         break;
       case 'anime':
-        resDet = await scrapeAnimeDetail(id);
-        resEp = await scrapeAnimeEpisode(episode); // Usually the ID is the full slug string for anime
+        resDet = await anime.detail(id);
+        resEp = await anime.getvideo(episode);
         break;
       default:
         // Generic fallback for others that follow standard pattern
