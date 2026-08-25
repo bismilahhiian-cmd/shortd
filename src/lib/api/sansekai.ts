@@ -80,22 +80,45 @@ export const pinedrama = {
     fetchWithCache('/pinedrama/episode', { collection_id, episodeNumber: String(episodeNumber) }),
 }
 
+import { DramaboxClient } from '@zhadev/dramabox'
+
+const dbClient = new DramaboxClient()
+
+// Helper to normalize zhadev responses to match sansekai format
+const wrapDb = async (promise: Promise<any>) => {
+  try {
+    const res = await promise
+    // @zhadev returns { success: true, data: { results: [...] } } or { data: [...] }
+    // Sansekai returns { code: 200, data: [...] }
+    if (!res.success) return { code: 400, msg: res.message || 'Error' }
+    
+    let normalizedData = res.data?.results || res.data?.list || res.data || []
+    
+    return {
+      code: 200,
+      data: normalizedData,
+      detail: res.data // Sometimes detail is needed at top level
+    }
+  } catch (e: any) {
+    return { code: 500, msg: e.message }
+  }
+}
+
 // ============================================================
-// DramaBox
+// DramaBox (Powered by @zhadev/dramabox native scraper)
 // ============================================================
 export const dramabox = {
-  foryou: (page = 1, lang = 'id') => fetchWithCache('/dramabox/foryou', { page: String(page), lang }),
-  vip: (lang = 'id') => fetchWithCache('/dramabox/vip', { lang }),
-  dubindo: (classify: string, page = 1, lang = 'id') =>
-    fetchWithCache('/dramabox/dubindo', { classify, page: String(page), lang }),
-  randomdrama: (lang = 'id') => fetchWithCache('/dramabox/randomdrama', { lang }),
-  latest: (lang = 'id') => fetchWithCache('/dramabox/latest', { lang }),
-  trending: (lang = 'id') => fetchWithCache('/dramabox/trending', { lang }),
-  populersearch: (lang = 'id') => fetchWithCache('/dramabox/populersearch', { lang }),
-  search: (query: string, lang = 'id') => fetchWithCache('/dramabox/search', { query, lang }),
-  detail: (bookId: string, lang = 'id') => fetchWithCache('/dramabox/detail', { bookId, lang }),
-  allepisode: (bookId: string) => fetchWithCache('/dramabox/allepisode', { bookId }),
-  decrypt: (url: string) => fetchWithCache('/dramabox/decrypt', { url }),
+  foryou: (page = 1, lang = 'id') => wrapDb(dbClient.getForYou(lang, page)),
+  vip: (lang = 'id') => wrapDb(dbClient.getVip(lang)),
+  dubindo: (classify: string, page = 1, lang = 'id') => wrapDb(dbClient.getDubIndo(lang, page)), // Assuming arg order
+  randomdrama: (lang = 'id') => wrapDb(dbClient.getRandomDrama(lang)),
+  latest: (lang = 'id') => wrapDb(dbClient.getLatest(lang)),
+  trending: (lang = 'id') => wrapDb(dbClient.getTrending(lang)),
+  populersearch: (lang = 'id') => wrapDb(dbClient.getPopularSearch(lang)),
+  search: (query: string, lang = 'id') => wrapDb(dbClient.searchDrama(query, lang)),
+  detail: (bookId: string, lang = 'id') => wrapDb(dbClient.getDramaDetail(bookId, lang)),
+  allepisode: (bookId: string) => wrapDb(dbClient.getChapters(bookId)),
+  decrypt: (url: string) => wrapDb(dbClient.getStreamUrl(url)),
 }
 
 // ============================================================
